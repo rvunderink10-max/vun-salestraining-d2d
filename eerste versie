@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Supabase Login Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; }
+    input, button { padding: 10px; margin: 6px 0; width: 100%; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-top: 20px; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Supabase Login Test</h1>
+
+  <div class="card">
+    <h3>Status</h3>
+    <div id="status">Nog niet ingelogd</div>
+  </div>
+
+  <div class="card">
+    <h3>Inloggen / Registreren (email + wachtwoord)</h3>
+    <input id="email" type="email" placeholder="email@example.com" />
+    <input id="password" type="password" placeholder="wachtwoord" />
+    <button id="signup">Registreer</button>
+    <button id="signin">Log in</button>
+    <button id="signout">Log uit</button>
+  </div>
+
+  <div class="card">
+    <h3>Magic Link (zonder wachtwoord)</h3>
+    <input id="magicEmail" type="email" placeholder="email@example.com" />
+    <button id="magic">Stuur Magic Link</button>
+  </div>
+
+  <div class="card">
+    <h3>Debug</h3>
+    <pre id="debug" style="white-space: pre-wrap;"></pre>
+  </div>
+
+  <!-- Supabase JS v2 via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://fnigihgvittxquapawuh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuaWdpaGd2aXR0eHF1YXBhd3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MDg3NjgsImV4cCI6MjA3MjQ4NDc2OH0.WzHp_ygSs8fdzv9VuGahPYNr_yS7LPhD_jHz8lDq_Us";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const statusEl = document.getElementById('status');
+    const debugEl = document.getElementById('debug');
+
+    function log(obj) {
+      const text = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+      console.log(obj);
+      debugEl.textContent = text;
+    }
+
+    async function refreshSession() {
+      const { data: { session }, error } = await client.auth.getSession();
+      if (error) { log(error); }
+      statusEl.textContent = session ? `Ingelogd als ${session.user.email}` : 'Nog niet ingelogd';
+    }
+
+    document.getElementById('signup').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const { data, error } = await client.auth.signUp({ email, password });
+      log(error ? error : data);
+      await refreshSession();
+    };
+
+    document.getElementById('signin').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      log(error ? error : data);
+      await refreshSession();
+    };
+
+    document.getElementById('signout').onclick = async () => {
+      const { error } = await client.auth.signOut();
+      log(error ? error : 'Uitgelogd');
+      await refreshSession();
+    };
+
+    document.getElementById('magic').onclick = async () => {
+      const email = document.getElementById('magicEmail').value.trim();
+      const { data, error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+      log(error ? error : data);
+    };
+
+    // Houd status bij wanneer auth verandert (bv. na magic link redirect)
+    client.auth.onAuthStateChange((_event, _session) => {
+      refreshSession();
+    });
+
+    refreshSession();
+  </script>
+</body>
+</html>
