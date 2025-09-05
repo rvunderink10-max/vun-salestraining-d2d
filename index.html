@@ -1,101 +1,553 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Supabase Login Test</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 40px auto; }
-    input, button { padding: 10px; margin: 6px 0; width: 100%; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-top: 20px; }
-    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Vun Salestraining — D2D Tracker</title>
+<style>
+  :root{
+    --bg:#0b0c10; --panel:#11151d; --line:#1f2433;
+    --fg:#e7eaf3; --muted:#a1a6b6;
+    --pri:#6ee7b7; --sec:#38bdf8;
+    --accent:#2a3450;
+
+    --punch-dur:1500ms; --smiley-size:34vh; --fist-x:10vh; --fist-y:5vh;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,Segoe UI,Roboto,Arial}
+  header{padding:12px 14px;background:#0f1219;border-bottom:1px solid var(--line);text-align:center}
+  header h1{margin:0;font-size:20px}
+  .wrap{max-width:1000px;margin:0 auto;padding:14px}
+
+  section.widget{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;border-top:3px solid var(--accent)}
+  section.widget>h2{margin:0 0 10px;font-size:16px;padding:6px 8px;background:#0f1420;border:1px solid var(--line);border-radius:8px}
+
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
+  input,select,textarea{width:100%;display:block;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:#0f1117;color:#e7eaf3}
+  textarea{min-height:60px}
+  .btn{padding:9px 14px;border:0;border-radius:999px;cursor:pointer}
+  .btn.pri{background:linear-gradient(90deg,var(--pri),var(--sec));color:#000;font-weight:700}
+  .btn.ghost{background:#0f1422;border:1px solid var(--line);color:#fff}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media (max-width:720px){.row2,.row3{grid-template-columns:1fr}}
+
+  .goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .goal{background:#0f1420;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+  .goal .lab{font-size:13px;color:var(--muted)}
+  .goal .val{font-size:18px;font-weight:800;margin:4px 0}
+  .progress{height:10px;background:#0d1220;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--sec))}
+
+  .chip{padding:2px 6px;border-radius:999px;background:#1f2433;font-size:11.5px;white-space:nowrap}
+  .chip.sale{background:linear-gradient(90deg,var(--pri),var(--sec));color:#000;font-weight:800}
+  .pill{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:#0f1422;font-size:12px}
+
+  .agTop{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .agBtn{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#0f1422;cursor:pointer;font-size:13px;color:#fff}
+  .spacer{flex:1}
+  .subBar{display:flex;gap:8px;align-items:center;margin:8px 0}
+
+  .cal-daynum{font-weight:800}
+  .sales-dot{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;padding:0 6px;border-radius:999px;background:linear-gradient(90deg,var(--pri),var(--sec));color:#000;font-weight:800;font-size:12px}
+
+  .dayHeader,.dayCard{display:grid;grid-template-columns:105px 66px 72px 1fr;gap:3px;align-items:start}
+  .dayHeader{font-size:12px;color:var(--muted);margin:4px 0 6px}
+  .dayCard{padding:7px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#0f1422}
+  .timeCol{font-size:12px;opacity:.85}
+  .notesCol{word-break:break-word}
+  .notesCol.short{display:inline-block;white-space:nowrap}
+  .notesCol.long{display:block;grid-column:1/-1;margin-top:6px;white-space:normal}
+  @media (max-width:720px){
+    .dayHeader{grid-template-columns:100px 64px 70px 1fr}
+    .dayCard{grid-template-columns:100px 64px 70px 1fr}
+  }
+  .dayPager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f2a4a;border:1px solid #2b6cb0;color:#dbeafe;padding:12px 18px;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.5);font-weight:800;letter-spacing:.2px;opacity:0;pointer-events:none;z-index:9999}
+  .toast.show{animation:toastIn .95s ease forwards}
+  @keyframes toastIn{0%{opacity:0;transform:translateX(-50%) translateY(8px)}25%{opacity:1;transform:translateX(-50%) translateY(0)}75%{opacity:1}100%{opacity:0}}
+  .pulse{animation:pulse .45s ease} @keyframes pulse{0%{transform:scale(1)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+
+  footer{background:#0f1219;border-top:1px solid var(--line);padding:12px;color:#aab0c3;text-align:center}
+  footer .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+  footer .btn{background:#0f1422;border:1px solid var(--line);color:#fff}
+
+  body[data-layout="inline"] .dayHeader,
+  body[data-layout="inline"] .dayCard{grid-template-columns:110px 70px 78px 1fr;gap:4px}
+  body[data-layout="inline"] .notesCol.long{grid-column:auto;margin-top:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  body[data-layout="wide-notes"] .dayHeader,
+  body[data-layout="wide-notes"] .dayCard{grid-template-columns:100px 64px 70px 1fr;gap:3px}
+  body[data-layout="wide-notes"] .notesCol.long{grid-column:1/-1;margin-top:6px}
+
+  #fabWrap{position:fixed;right:16px;bottom:16px;z-index:60}
+  #fab{padding:12px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1422;color:#fff;cursor:pointer}
+  #fabPanel{position:absolute;right:0;bottom:56px;display:none;background:#0f1422;border:1px solid var(--line);border-radius:12px;padding:8px;min-width:140px}
+  #fabPanel button{display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#10131b;color:#e7eaf3;cursor:pointer}
+  #fabPanel button.active{background:linear-gradient(90deg,var(--pri),var(--sec));color:#000;font-weight:800}
+
+  #fx{position:fixed;inset:0;background:#000;z-index:30;display:none}
+  .stage{position:fixed;inset:0;display:none;place-items:center;pointer-events:none;z-index:31}
+  #smiley,#fist,#fist2{position:fixed;left:50%;top:50%;line-height:1;user-select:none;filter:drop-shadow(0 18px 40px rgba(0,0,0,.6))}
+  #smiley{font-size:var(--smiley-size);transform:translate(-50%,-50%)}
+  #smiley::after{content:"";position:absolute;left:50%;top:50%;width:70%;height:55%;transform:translate(-50%,-70%) rotate(-8deg);background:radial-gradient(closest-side,rgba(255,255,255,.32),rgba(255,255,255,0));border-radius:50%;filter:blur(10px)}
+  #fist{font-size:calc(var(--smiley-size)*.85);display:none;transform:translate(calc(-50% + var(--fist-x)), calc(-50% + var(--fist-y)))}
+  #fist2{font-size:calc(var(--smiley-size)*.85);display:none;transform:translate(calc(-50% - var(--fist-x)), calc(-50% + var(--fist-y))) scaleX(-1)}
+  @keyframes smilePop{0%{transform:translate(-50%,-50%) scale(.72)}55%{transform:translate(-50%,-50%) scale(1.15)}78%{transform:translate(-50%,-50%) scale(.96)}100%{transform:translate(-50%,-50%) scale(1)}
+  @keyframes punchToShoulder{0%{transform:translate(calc(-50% + 42vw),calc(-50% + 28vh)) scale(.6) rotate(-8deg)}55%{transform:translate(calc(-50% + var(--fist-x)),calc(-50% + var(--fist-y))) scale(1.2)}100%{transform:translate(calc(-50% + var(--fist-x)),calc(-50% + var(--fist-y))) scale(1)}}
+  @keyframes shakeScene{0%{transform:translate(0,0)}25%{transform:translate(-6px,4px)}50%{transform:translate(6px,-4px)}75%{transform:translate(-4px,-2px)}100%{transform:translate(0,0)}}
+  .scene-shake{animation:shakeScene .32s ease-in-out}
+  .flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 55%, rgba(255,255,255,.9), rgba(255,255,255,0) 55%);opacity:0;pointer-events:none;z-index:32}
+  .flash.show{animation:flash .32s ease-out}
+  @keyframes flash{0%{opacity:.9}100%{opacity:0}}
+</style>
 </head>
-<body>
-  <h1>Supabase Login Test</h1>
+<body data-layout="inline">
+<header><h1>Vun Salestraining — D2D Tracker</h1></header>
 
-  <div class="card">
-    <h3>Status</h3>
-    <div id="status">Nog niet ingelogd</div>
+<div class="wrap">
+  <section class="widget">
+    <h2>Dagfocus</h2>
+    <input id="dayFocus" type="text" placeholder="Bijv. 'Tempo vasthouden en elke nee direct doorpakken'"/>
+  </section>
+
+  <section class="widget">
+    <h2>Voortgang vandaag</h2>
+    <div class="goals">
+      <div class="goal"><div class="lab">Deuren</div><div class="val" id="goalDoorsText">0/0</div><div class="progress"><div class="fill" id="goalDoorsFill"></div></div></div>
+      <div class="goal"><div class="lab">Closes</div><div class="val" id="goalClosesText">0/0</div><div class="progress"><div class="fill" id="goalClosesFill"></div></div></div>
+      <div class="goal"><div class="lab">Sales</div><div class="val" id="goalSalesText">0/0</div><div class="progress"><div class="fill" id="goalSalesFill"></div></div></div>
+    </div>
+  </section>
+
+  <section class="widget">
+    <h2>Snel invoeren</h2>
+    <form id="entryForm">
+      <div class="row3">
+        <div><label for="date">Datum</label><input id="date" type="date"/></div>
+        <div><label for="stage">Stap</label>
+          <select id="stage">
+            <option value="1" selected>Intro</option>
+            <option value="2">Short story</option>
+            <option value="3">Presentatie</option>
+            <option value="4">Close</option>
+          </select>
+        </div>
+        <div><label for="outcome">Uitkomst</label>
+          <select id="outcome">
+            <option selected>Niet geïnteresseerd</option>
+            <option>Nee sticker</option>
+            <option>Follow-up/afspraak</option>
+            <option>Sale</option>
+          </select>
+        </div>
+      </div>
+      <label for="notes">Notities</label>
+      <textarea id="notes" placeholder="Naam, bezwaren, details... (optioneel)"></textarea>
+      <button class="btn pri" id="btnAdd" type="submit">+ Voeg deur toe</button>
+    </form>
+  </section>
+
+  <section class="widget" id="agendaSection">
+    <div class="agTop">
+      <h2 style="margin:0;border:0;padding:0;background:none">Agenda</h2>
+      <span class="pill" id="dayTotalsPill">Intro 0 • Short. 0 • Pres. 0 • Close 0</span>
+      <span class="spacer"></span>
+      <div class="agMode">
+        <button class="agBtn" id="modeDay" style="font-weight:700">Dag</button>
+        <button class="agBtn" id="modeWeek">Week</button>
+        <button class="agBtn" id="modeMonth">Maand</button>
+      </div>
+      <button class="agBtn" id="btnToday">Vandaag</button>
+    </div>
+
+    <div class="subBar">
+      <button class="agBtn" id="agPrev">◀︎</button>
+      <button class="agBtn" id="agLabel" title="Klik om datum te kiezen"></button>
+      <input id="datePicker" type="date" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"/>
+      <button class="agBtn" id="agNext">▶︎</button>
+    </div>
+
+    <div id="dayListWrap">
+      <div class="dayPager">
+        <div class="pill" id="dayPagerText">0–0 van 0 • pagina 0/0</div>
+        <span style="flex:1"></span>
+        <button class="agBtn" id="dayPrev">◀︎ Vorige</button>
+        <button class="agBtn" id="dayNext">Volgende ▶︎</button>
+      </div>
+      <div class="dayHeader"><div>Datum / Tijd</div><div>Stap</div><div>Uitkomst</div><div>Notitie</div></div>
+      <div id="dayList"></div>
+    </div>
+
+    <div id="agendaView"></div>
+  </section>
+
+  <section class="widget">
+    <h2 id="monthProgTitle">Voortgang — Deze maand</h2>
+    <div class="goals">
+      <div class="goal">
+        <div class="lab">Sales</div>
+        <div class="val" id="mGoalSalesText">0/0</div>
+        <div class="progress"><div class="fill" id="mGoalSalesFill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="widget">
+    <h2>Doel instellen</h2>
+    <div class="row3">
+      <div><label for="goalDoors">Dagdoel deuren</label><input id="goalDoors" type="number" min="0" placeholder="Bijv. 60"/></div>
+      <div><label for="goalCloses">Dagdoel closes</label><input id="goalCloses" type="number" min="0" placeholder="Bijv. 10"/></div>
+      <div><label for="goalSales">Dagdoel sales</label><input id="goalSales" type="number" min="0" placeholder="Bijv. 3"/></div>
+    </div>
+    <div class="row2" style="margin-top:8px">
+      <div><label for="mGoalSales">Maanddoel sales</label><input id="mGoalSales" type="number" min="0" placeholder="Bijv. 60"/></div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="bar">
+    <button class="btn ghost" id="btnImportCsv">Import CSV</button>
+    <button class="btn ghost" id="btnExportCsv">Export CSV</button>
+    <input id="fileInputCsv" type="file" accept="text/csv" style="display:none"/>
   </div>
+  <div>Alles draait offline. Maak af en toe een CSV-export als back-up.</div>
+</footer>
 
-  <div class="card">
-    <h3>Inloggen / Registreren (email + wachtwoord)</h3>
-    <input id="email" type="email" placeholder="email@example.com" />
-    <input id="password" type="password" placeholder="wachtwoord" />
-    <button id="signup">Registreer</button>
-    <button id="signin">Log in</button>
-    <button id="signout">Log uit</button>
+<div class="toast" id="toast">✔️ Deur toegevoegd</div>
+
+<div id="fabWrap">
+  <button id="fab">Layout</button>
+  <div id="fabPanel">
+    <button data-layout="inline">Inline</button>
+    <button data-layout="wide-notes">Wide-notes</button>
   </div>
+</div>
 
-  <div class="card">
-    <h3>Magic Link (zonder wachtwoord)</h3>
-    <input id="magicEmail" type="email" placeholder="email@example.com" />
-    <button id="magic">Stuur Magic Link</button>
-  </div>
+<canvas id="fx"></canvas>
+<div class="stage" id="scene">
+  <div id="smiley">😄</div>
+  <div id="fist">👊</div>
+  <div id="fist2">👊</div>
+  <div id="flash" class="flash"></div>
+</div>
 
-  <div class="card">
-    <h3>Debug</h3>
-    <pre id="debug" style="white-space: pre-wrap;"></pre>
-  </div>
+<script>
+/* ---------- Helpers ---------- */
+const LS={entries:"vun_entries_neutral",goals:"vun_goals_neutral",focus:"vun_focus_neutral",layout:"vun_layout_neutral"};
+const $=s=>document.querySelector(s);
+function pad(n){return String(n).padStart(2,"0")}
+function isoLocal(d=new Date()){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function todayISO(){return isoLocal(new Date())}
+function timeNow(){const d=new Date();return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`}
+function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
+function read(k,d){try{return JSON.parse(localStorage.getItem(k))??d;}catch{return d;}}
+function write(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function parseISOLocal(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function monthName(y,m){return new Date(y,m,1).toLocaleString('nl-NL',{month:'long'})}
 
-  <!-- Supabase JS v2 via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://fnigihgvittxquapawuh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuaWdpaGd2aXR0eHF1YXBhd3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MDg3NjgsImV4cCI6MjA3MjQ4NDc2OH0.WzHp_ygSs8fdzv9VuGahPYNr_yS7LPhD_jHz8lDq_Us";
+/* ---------- Hoisted utils (fix) ---------- */
+function stepShort(i){ return ["Intro","Short.","Pres.","Close"][i-1]||""; }
+function shortOutcome(s){
+  if(s==="Niet geïnteresseerd") return "IDC";
+  if(s==="Follow-up/afspraak") return "Afspr.";
+  if(s==="Nee sticker") return "Sticker";
+  return s;
+}
 
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* ---------- State ---------- */
+let entries=read(LS.entries,[]);
+let goals=read(LS.goals,{doors:60,closes:10,sales:3,mSales:60});
+let focusByDate=read(LS.focus,{});
+let agMode="day"; let agCursor=new Date(); agCursor.setHours(0,0,0,0);
+const PAGE=10; let dayPageIndex=0;
 
-    const statusEl = document.getElementById('status');
-    const debugEl = document.getElementById('debug');
+/* ---------- Toast ---------- */
+function showToastOk(msg="✔️ Deur toegevoegd"){
+  const t=$("#toast"); t.textContent=msg;
+  t.style.background="#0f2a4a"; t.style.borderColor="#2b6cb0"; t.style.color="#dbeafe";
+  t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
+}
+function showToastErr(msg){
+  const t=$("#toast"); t.textContent="⚠️ "+msg;
+  t.style.background="#3a0b0b"; t.style.borderColor="#ef4444"; t.style.color="#ffecec";
+  t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
+}
+window.addEventListener("error",e=>{showToastErr(e.message||"Onbekende fout")});
 
-    function log(obj) {
-      const text = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
-      console.log(obj);
-      debugEl.textContent = text;
-    }
+/* ---------- Layout FAB ---------- */
+(function(){
+  const fab=$("#fab"), panel=$("#fabPanel");
+  function setLayout(name){
+    document.body.setAttribute("data-layout", name);
+    localStorage.setItem(LS.layout, name);
+    [...panel.querySelectorAll("button")].forEach(b=>b.classList.toggle("active", b.dataset.layout===name));
+    renderDayList();
+  }
+  const saved=localStorage.getItem(LS.layout)||"inline"; setLayout(saved);
+  fab.addEventListener("click",()=>{ panel.style.display = panel.style.display==="block"?"none":"block"; });
+  panel.addEventListener("click",(e)=>{
+    const btn=e.target.closest("button[data-layout]"); if(!btn) return;
+    setLayout(btn.dataset.layout); panel.style.display="none";
+  });
+  addEventListener("click",(e)=>{ if(!$("#fabWrap").contains(e.target)) panel.style.display="none"; });
+})();
 
-    async function refreshSession() {
-      const { data: { session }, error } = await client.auth.getSession();
-      if (error) { log(error); }
-      statusEl.textContent = session ? `Ingelogd als ${session.user.email}` : 'Nog niet ingelogd';
-    }
+/* ---------- Focus & doelen ---------- */
+$("#dayFocus").addEventListener("input",()=>{ focusByDate[todayISO()]=$("#dayFocus").value; write(LS.focus,focusByDate); });
+(function initGoals(){
+  $("#goalDoors").value=goals.doors; $("#goalCloses").value=goals.closes; $("#goalSales").value=goals.sales; $("#mGoalSales").value=goals.mSales;
+  [["goalDoors","doors"],["goalCloses","closes"],["goalSales","sales"],["mGoalSales","mSales"]]
+    .forEach(([id,key])=> $("#"+id).addEventListener("input",()=>{ goals[key]=+($("#"+id).value||0); write(LS.goals,goals); updateProgress(); }));
+})();
 
-    document.getElementById('signup').onclick = async () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const { data, error } = await client.auth.signUp({ email, password });
-      log(error ? error : data);
-      await refreshSession();
-    };
+/* ---------- CSV ---------- */
+function csvCell(v){ const s=(v==null?"":String(v)).replace(/\n/g," ").replace(/\r/g," "); return /[\",]/.test(s)?('"'+s.replace(/\"/g,'""')+'"'):s; }
+function exportCSV(){
+  const header=["id","date","time","stage","outcome","notes"];
+  const rows=[header.join(",")].concat(entries.map(e=>header.map(k=>csvCell(e[k])).join(",")));
+  const blob=new Blob([rows.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`vun-entries-${todayISO()}.csv`; a.click();
+  showToastOk("CSV geëxporteerd ✅");
+}
+$("#btnExportCsv").addEventListener("click", exportCSV);
+$("#btnImportCsv").addEventListener("click", ()=>$("#fileInputCsv").click());
+$("#fileInputCsv").addEventListener("change", async ev=>{
+  const f=ev.target.files?.[0]; if(!f) return;
+  try{
+    const text=await f.text();
+    const [head,...lines]=text.split(/\r?\n/).filter(Boolean);
+    const keys=head.split(",");
+    const mapLine=l=>{ const out=[]; let cur="",q=false; for(let i=0;i<l.length;i++){ const c=l[i]; if(c=='"'){ if(q && l[i+1]=='"'){cur+='"'; i++;} else q=!q; } else if(c=="," && !q){ out.push(cur); cur=""; } else cur+=c; } out.push(cur); return out; };
+    const arr=lines.map(l=>{ const v=mapLine(l); const o={}; keys.forEach((k,i)=>o[k]=v[i]??""); o.stage=+o.stage||1; if(!o.id) o.id=uid(); return o;});
+    const byId=new Map(entries.map(e=>[e.id,e])); arr.forEach(r=>byId.set(r.id,r));
+    entries=[...byId.values()].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+    write(LS.entries,entries); renderAgenda(); renderDayList(); showToastOk("CSV geïmporteerd ✅");
+  }catch(e){ showToastErr("Import mislukt: "+(e?.message||e)); }
+  finally{ ev.target.value=""; }
+});
 
-    document.getElementById('signin').onclick = async () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const { data, error } = await client.auth.signInWithPassword({ email, password });
-      log(error ? error : data);
-      await refreshSession();
-    };
+/* ---------- Invoer ---------- */
+$("#date").value=todayISO();
+$("#stage").value="1";
+$("#outcome").value="Niet geïnteresseerd";
+$("#dayFocus").value=focusByDate[todayISO()]||"";
 
-    document.getElementById('signout').onclick = async () => {
-      const { error } = await client.auth.signOut();
-      log(error ? error : 'Uitgelogd');
-      await refreshSession();
-    };
+$("#entryForm").addEventListener("submit",ev=>{
+  ev.preventDefault();
+  try{
+    const btn=$("#btnAdd"); btn.classList.remove("pulse"); void btn.offsetWidth; btn.classList.add("pulse");
+    const d=$("#date").value||todayISO();
+    const rec={id:uid(),date:d,time:timeNow(),stage:+$("#stage").value,outcome:$("#outcome").value,notes:($("#notes").value||"").trim()};
+    entries=[rec,...entries]; write(LS.entries,entries);
+    if(rec.outcome==="Sale" && d===todayISO()) partyPlay();
+    showToastOk(); $("#notes").value=""; $("#date").value=todayISO(); $("#outcome").value="Niet geïnteresseerd"; $("#stage").value="1";
+    if(agMode==="day" && isoLocal(agCursor)===d) renderDayList();
+    renderAgenda(); updateProgress();
+  }catch(err){ showToastErr("Toevoegen mislukt: "+(err?.message||err)); }
+});
 
-    document.getElementById('magic').onclick = async () => {
-      const email = document.getElementById('magicEmail').value.trim();
-      const { data, error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-      log(error ? error : data);
-    };
+/* ---------- Progress ---------- */
+function updateMonthTitle(){
+  const now=new Date();
+  const isSame = agCursor.getFullYear()===now.getFullYear() && agCursor.getMonth()===now.getMonth();
+  $("#monthProgTitle").textContent = isSame? "Voortgang — Deze maand" : `Voortgang — ${monthName(agCursor.getFullYear(),agCursor.getMonth())} ${agCursor.getFullYear()}`;
+}
+function updateProgress(){
+  const day=todayISO(); const list=entries.filter(e=>e.date===day);
+  const d=list.length, c=list.filter(e=>e.stage===4).length, s=list.filter(e=>e.outcome==="Sale").length;
+  const pct=(v,max)=>Math.min(100,(v/(max||1))*100);
+  $("#goalDoorsText").textContent=`${d}/${goals.doors||0}`;
+  $("#goalClosesText").textContent=`${c}/${goals.closes||0}`;
+  $("#goalSalesText").textContent=`${s}/${goals.sales||0}`;
+  $("#goalDoorsFill").style.width=pct(d,goals.doors)+"%";
+  $("#goalClosesFill").style.width=pct(c,goals.closes)+"%";
+  $("#goalSalesFill").style.width=pct(s,goals.sales)+"%";
 
-    // Houd status bij wanneer auth verandert (bv. na magic link redirect)
-    client.auth.onAuthStateChange((_event, _session) => {
-      refreshSession();
-    });
+  const y=agCursor.getFullYear(), m=agCursor.getMonth();
+  const first=`${y}-${pad(m+1)}-01`; const next=`${m===11?y+1:y}-${pad((m+1)%12+1)}-01`;
+  const sm=entries.filter(e=>e.date>=first && e.date<next && e.outcome==="Sale").length;
+  $("#mGoalSalesText").textContent=`${sm}/${goals.mSales||0}`;
+  $("#mGoalSalesFill").style.width=pct(sm,goals.mSales)+"%";
+  updateMonthTitle();
+}
 
-    refreshSession();
-  </script>
+/* ---------- Daglijst ---------- */
+function computeDayTotals(dayISO){
+  const t={1:0,2:0,3:0,4:0}; entries.forEach(e=>{ if(e.date===dayISO){ t[e.stage]=(t[e.stage]||0)+1; }}); 
+  $("#dayTotalsPill").textContent=`Intro ${t[1]||0} • Short. ${t[2]||0} • Pres. ${t[3]||0} • Close ${t[4]||0}`;
+}
+function renderDayList(){
+  const dayISO=isoLocal(agCursor); $("#agLabel").textContent=dayISO; computeDayTotals(dayISO);
+  const list=entries.filter(e=>e.date===dayISO).sort((a,b)=>(b.time||"").localeCompare(a.time||""));
+  const total=list.length, pages=Math.max(1,Math.ceil(total/PAGE)); if(dayPageIndex>pages-1) dayPageIndex=Math.max(0,pages-1);
+  const start=dayPageIndex*PAGE, end=Math.min(start+PAGE,total); const view=list.slice(start,end);
+  const cont=$("#dayList");
+  if(total===0){ $("#dayPagerText").textContent=`0–0 van 0 • pagina 0/0`; $("#dayPrev").style.display="none"; $("#dayNext").style.display="none"; cont.innerHTML=`<div class="pill">Geen resultaten</div>`; return; }
+  $("#dayPagerText").textContent=`${start+1}–${end} van ${total} • pagina ${dayPageIndex+1}/${pages}`;
+  $("#dayPrev").style.display=(dayPageIndex<=0)?"none":"inline-block";
+  $("#dayNext").style.display=(dayPageIndex>=pages-1)?"none":"inline-block";
+  cont.innerHTML = view.map(e=>{
+    const outShort=shortOutcome(e.outcome), outClass=(e.outcome==="Sale")?"chip sale":"chip";
+    const note=(e.notes||"").trim(); const isShort = note.length>0 && note.length<=10 && !/\n/.test(note);
+    return `<div class="dayCard">
+      <div class="timeCol">${e.date}<br>${e.time||""}</div>
+      <div><span class="chip">${stepShort(e.stage)}</span></div>
+      <div><span class="${outClass}">${outShort}</span></div>
+      <div class="notesCol ${isShort?'short':'long'}">${note?note:""}</div>
+    </div>`;
+  }).join("");
+}
+$("#dayPrev").addEventListener("click",()=>{ if(dayPageIndex>0){ dayPageIndex--; renderDayList(); }});
+$("#dayNext").addEventListener("click",()=>{ dayPageIndex++; renderDayList(); });
+
+/* ---------- Agenda ---------- */
+function startOfWeek(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); x.setHours(0,0,0,0); return x; }
+function fmt(d){return isoLocal(d)}
+function weekNum(d){ const date=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const day=(date.getDay()+6)%7; date.setDate(date.getDate()-day+3); const firstThr=new Date(date.getFullYear(),0,4); return 1+Math.round(((date-firstThr)/86400000-3+((firstThr.getDay()+6)%7))/7); }
+
+function renderAgenda(){
+  const view=$("#agendaView");
+  $("#dayListWrap").style.display=(agMode==="day")?"block":"none";
+  view.innerHTML="";
+  if(agMode==="day"){
+    $("#agLabel").textContent=isoLocal(agCursor); $("#agLabel").disabled=false; renderDayList();
+  } else if(agMode==="week"){
+    $("#agLabel").textContent=`W${weekNum(agCursor)}`; $("#agLabel").disabled=true;
+    const sow=startOfWeek(agCursor); const days=[...Array(7)].map((_,i)=>fmt(new Date(sow.getFullYear(),sow.getMonth(),sow.getDate()+i)));
+    const byDay=Object.fromEntries(days.map(d=>[d,[]])); entries.forEach(e=>{ if(byDay[e.date]) byDay[e.date].push(e); });
+    view.innerHTML = days.map(d=>{
+      const L=byDay[d], sales=L.filter(x=>x.outcome==="Sale").length;
+      return `<div class="cell-week" data-date="${d}" style="margin:6px 0;padding:8px;border:1px solid var(--line);border-radius:8px;cursor:pointer">
+        <div><strong>${d}</strong> — <span class="pill">${L.length} deuren</span> <span class="pill" style="background:linear-gradient(90deg,var(--pri),var(--sec));color:#000">Sales: ${sales}</span></div>
+      </div>`;
+    }).join("");
+    view.querySelectorAll(".cell-week").forEach(el=>el.addEventListener("click",()=>{ agMode="day"; agCursor=parseISOLocal(el.getAttribute("data-date")); dayPageIndex=0; renderAgenda(); }));
+  } else {
+    const y=agCursor.getFullYear(), m=agCursor.getMonth();
+    $("#agLabel").textContent=`${monthName(y,m)} ${y}`; $("#agLabel").disabled=true;
+    const first=new Date(y,m,1), start=startOfWeek(first);
+    const cells=[...Array(42)].map((_,i)=>new Date(start.getFullYear(),start.getMonth(),start.getDate()+i));
+    const salesCount=entries.reduce((acc,e)=>{ if(e.outcome==="Sale"){ acc[e.date]=(acc[e.date]||0)+1; } return acc; }, {});
+    view.innerHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+      ${["Ma","Di","Wo","Do","Vr","Za","Zo"].map(d=>`<div style="text-align:center;font-size:12px;color:#8c92a6">${d}</div>`).join("")}
+      ${cells.map(d=>{
+        const key=isoLocal(d), dim=d.getMonth()!==m, n=salesCount[key]||0;
+        return `<div data-date="${key}" class="cell" style="border:1px solid var(--line);border-radius:8px;padding:6px;${dim?'opacity:.45':''};cursor:pointer">
+          <div class="cal-daynum">${d.getDate()}</div>
+          ${n?`<div class="sales-dot" title="${n} sale(s)">${n}</div>`:""}
+        </div>`;
+      }).join("")}
+    </div>`;
+    view.querySelectorAll(".cell").forEach(el=>el.addEventListener("click",()=>{ agMode="day"; agCursor=parseISOLocal(el.getAttribute("data-date")); dayPageIndex=0; renderAgenda(); }));
+  }
+  updateProgress();
+}
+$("#agPrev").addEventListener("click",()=>{ if(agMode==="day") agCursor.setDate(agCursor.getDate()-1);
+                                           else if(agMode==="week") agCursor.setDate(agCursor.getDate()-7);
+                                           else agCursor.setMonth(agCursor.getMonth()-1);
+                                           dayPageIndex=0; renderAgenda(); });
+$("#agNext").addEventListener("click",()=>{ if(agMode==="day") agCursor.setDate(agCursor.getDate()+1);
+                                           else if(agMode==="week") agCursor.setDate(agCursor.getDate()+7);
+                                           else agCursor.setMonth(agCursor.getMonth()+1);
+                                           dayPageIndex=0; renderAgenda(); });
+$("#modeDay").addEventListener("click",()=>{agMode="day"; dayPageIndex=0; renderAgenda();});
+$("#modeWeek").addEventListener("click",()=>{agMode="week"; renderAgenda();});
+$("#modeMonth").addEventListener("click",()=>{agMode="month"; renderAgenda();});
+$("#btnToday").addEventListener("click",()=>{ agMode="day"; agCursor=new Date(); agCursor.setHours(0,0,0,0); dayPageIndex=0; renderAgenda(); });
+$("#agLabel").addEventListener("click",()=>{ if(agMode!=="day") return; const dp=$("#datePicker"); dp.value=isoLocal(agCursor); dp.click(); });
+$("#datePicker").addEventListener("change",(e)=>{ if(!e.target.value) return; agCursor=parseISOLocal(e.target.value); dayPageIndex=0; renderAgenda(); });
+
+/* ---------- Smiley Party ---------- */
+const fxCanvas = document.getElementById('fx');
+const fxCtx = fxCanvas.getContext('2d');
+const scene = document.getElementById('scene');
+const smiley = document.getElementById('smiley');
+const fist   = document.getElementById('fist');
+const flash  = document.getElementById('flash');
+
+let center={x:innerWidth/2,y:Math.max(100,innerHeight*0.22)}, ball={r:56,rot:0}, beams=[], particles=[];
+let last=0, beatTime=0, beatInterval=0.5, beatPulse=0;
+
+function fit(){ fxCanvas.width=innerWidth*devicePixelRatio; fxCanvas.height=innerHeight*devicePixelRatio; fxCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); center={x:innerWidth/2,y:Math.max(100,innerHeight*0.22)};}
+addEventListener('resize', fit, {passive:true});
+function setBPM(bpm){ beatInterval=60/Math.max(60,Math.min(200,bpm)); }
+function initBeams(intensity=1.8){ const n=Math.round(intensity*28); beams=Array.from({length:n},(_,i)=>({ang:(i/n)*Math.PI*2,hue:Math.random()*360,w:1.6+Math.random()*1.6})); }
+function render(t){
+  if(fxCanvas.style.display!=="block"){ requestAnimationFrame(render); return; }
+  const now=t/1000, dt=Math.min(0.033, now-last||0.016); last=now;
+  beatTime+=dt; if(beatTime>=beatInterval){ beatTime-=beatInterval; beatPulse=1; } beatPulse*=0.9;
+  fxCtx.clearRect(0,0,innerWidth,innerHeight);
+  fxCtx.save(); fxCtx.globalCompositeOperation='lighter';
+  const sweep=now*0.6;
+  beams.forEach((b,i)=>{
+    const ang=b.ang+sweep+Math.sin(now*0.8+i)*0.02;
+    const len=Math.max(innerWidth,innerHeight)*0.95;
+    const x2=center.x+Math.cos(ang)*len, y2=center.y+Math.sin(ang)*len;
+    const lw=b.w+0.9*beatPulse+Math.sin(now*1.5+i)*0.3;
+    const g=fxCtx.createLinearGradient(center.x,center.y,x2,y2);
+    g.addColorStop(0,`hsla(${b.hue},100%,60%,0)`);
+    g.addColorStop(0.25,`hsla(${b.hue},100%,65%,${.28+.4*beatPulse})`);
+    g.addColorStop(0.95,`hsla(${(b.hue+40)%360},100%,70%,0)`);
+    fxCtx.strokeStyle=g; fxCtx.lineWidth=lw;
+    fxCtx.beginPath(); fxCtx.moveTo(center.x,center.y); fxCtx.lineTo(x2,y2); fxCtx.stroke();
+  });
+  fxCtx.restore();
+  const r=ball.r*(1+0.03*beatPulse);
+  const grd=fxCtx.createRadialGradient(center.x-10,center.y-10,5,center.x,center.y,r+12);
+  grd.addColorStop(0,'#eee'); grd.addColorStop(0.5,'#777'); grd.addColorStop(1,'#222');
+  fxCtx.fillStyle=grd; fxCtx.beginPath(); fxCtx.arc(center.x,center.y,r,0,Math.PI*2); fxCtx.fill();
+  ball.rot+=dt*0.7;
+  fxCtx.strokeStyle='rgba(255,255,255,.35)'; fxCtx.lineWidth=1;
+  for(let lat=-70;lat<=70;lat+=14){ const rr=Math.cos(lat*Math.PI/180)*r*.96; fxCtx.beginPath(); fxCtx.ellipse(center.x,center.y,r,rr,0,0,Math.PI*2); fxCtx.stroke(); }
+  for(let i=0;i<12;i++){ const ang=i*(Math.PI*2/12)+ball.rot*0.8; fxCtx.strokeStyle='rgba(255,255,255,.25)'; fxCtx.beginPath(); fxCtx.moveTo(center.x,center.y); fxCtx.lineTo(center.x+Math.cos(ang)*r, center.y+Math.sin(ang)*r); fxCtx.stroke(); }
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.vy+=p.g*dt; p.vx*=p.drag; p.vy*=p.drag; p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt;
+    fxCtx.save(); fxCtx.translate(p.x,p.y);
+    fxCtx.fillStyle=p.col; fxCtx.beginPath(); fxCtx.arc(0,0,p.sz*1.6,0,Math.PI*2); fxCtx.fill();
+    fxCtx.restore();
+    if(p.life<=0) particles.splice(i,1);
+  }
+  requestAnimationFrame(render);
+}
+function burstFirework(x,y){
+  const n=60+Math.floor(Math.random()*40);
+  for(let i=0;i<n;i++){
+    const ang=Math.random()*Math.PI*2, sp=100+Math.random()*320;
+    particles.push({x,y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,g:280,drag:.985,life:1.2+Math.random()*1.2,sz:1.5+Math.random()*3,col:`hsl(${Math.random()*360},100%,60%)`});
+  }
+}
+function partyPlay(){
+  const top=Math.max(100,innerHeight*0.22);
+  fxCanvas.style.display="block"; scene.style.display="grid"; fit(); setBPM(120); initBeams(1.8); requestAnimationFrame(render);
+  const root=document.documentElement; // reset anims
+  document.getElementById('smiley').style.animation='none'; document.getElementById('fist').style.animation='none'; void root.offsetWidth;
+  document.getElementById('smiley').style.animation=`smilePop var(--punch-dur) ease-out both`;
+  setTimeout(()=>{
+    const fist=document.getElementById('fist');
+    fist.style.display='block';
+    fist.style.animation=`punchToShoulder var(--punch-dur) cubic-bezier(.2,.8,.2,1) both`;
+    setTimeout(()=>{fist.style.display='none';},1600);
+  },375);
+  const flash=document.getElementById('flash');
+  flash.classList.remove('show'); void flash.offsetWidth; flash.classList.add('show');
+  const sceneEl=document.getElementById('scene');
+  sceneEl.classList.remove('scene-shake'); void sceneEl.offsetWidth; sceneEl.classList.add('scene-shake'); setTimeout(()=>sceneEl.classList.remove('scene-shake'),320);
+  burstFirework(innerWidth/2+80, top-40); burstFirework(innerWidth/2-60, top-20); burstFirework(innerWidth/2, top-80);
+  setTimeout(()=>{ fxCanvas.style.display="none"; sceneEl.style.display="none"; particles.length=0; },1600);
+}
+
+/* ---------- Boot ---------- */
+function updateAll(){ renderAgenda(); updateProgress(); }
+(function boot(){
+  try{
+    $("#date").value=todayISO();
+    $("#dayFocus").value=focusByDate[todayISO()]||"";
+    updateAll();
+  }catch(err){ showToastErr("Startfout: "+(err?.message||err)); }
+})();
+</script>
 </body>
 </html>
